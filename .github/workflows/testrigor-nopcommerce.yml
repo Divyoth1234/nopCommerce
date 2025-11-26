@@ -28,7 +28,7 @@ jobs:
 
       # Suite ID is a variable (NOT secret) per your checklist
       TESTRIGOR_SUITE_ID: ${{ vars.TESTRIGOR_SUITE_ID }}
-      TARGET_URL: http://localhost:5000
+      TARGET_URL: http://127.0.0.1:5000
 
     steps:
       - name: Checkout
@@ -103,7 +103,7 @@ jobs:
 
       # ✅ localhost curl check
       - name: Verify localhost works
-        run: curl -LI http://localhost:5000
+        run: curl -LI http://127.0.0.1:5000
 
       # --- Node + testRigor CLI ---
       - name: Setup Node
