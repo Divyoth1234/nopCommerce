@@ -47,9 +47,8 @@ jobs:
         run: |
           sudo apt-get install -y aspnetcore-runtime-8.0
           dotnet --info
-        # nopCommerce Linux install uses .NET runtime on Ubuntu 22.04 :contentReference[oaicite:1]{index=1}
 
-      # --- Install sqlcmd tools (your step 250) ---
+      # --- Install sqlcmd tools ---
       - name: Install sqlcmd tools
         run: |
           sudo apt-get install -y mssql-tools18 unixodbc-dev
@@ -69,7 +68,7 @@ jobs:
           echo "MSSQL did not start in time"
           exit 1
 
-      # --- Your DB creation steps (idempotent) ---
+      # --- DB creation steps ---
       - name: Create nopCommerce database and user
         run: |
           sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -C -Q "IF DB_ID('${NOP_DB}') IS NULL CREATE DATABASE ${NOP_DB};"
@@ -77,7 +76,7 @@ jobs:
           sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -d "${NOP_DB}" -C -Q "IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name='${NOP_USER}') CREATE USER ${NOP_USER} FOR LOGIN ${NOP_USER}; EXEC sp_addrolemember N'db_owner', N'${NOP_USER}';"
           sqlcmd -S localhost,1433 -U "${NOP_USER}" -P "${NOP_USER_PW}" -d "${NOP_DB}" -C -Q "SELECT DB_NAME();"
 
-      # --- Your NoSource download + unzip steps ---
+      # --- NoSource download + unzip ---
       - name: Download nopCommerce NoSource Linux package
         run: |
           mkdir -p nopcommerce
@@ -85,26 +84,24 @@ jobs:
             https://github.com/nopSolutions/nopCommerce/releases/download/release-4.90.1/nopCommerce_4.90.1_NoSource_linux_x64.zip
           unzip -q nop_no_source_linux.zip -d nopcommerce
 
-
       - name: Create folders + permissions
         run: |
-          cd /var/www/nopcommerce
+          cd nopcommerce
           mkdir -p bin logs
-          sudo chmod -R 755 /var/www/nopcommerce
+          chmod -R 755 .
 
       - name: Install libgdiplus (captcha/images)
         run: sudo apt-get install -y libgdiplus
-        # recommended by nopCommerce Linux docs :contentReference[oaicite:3]{index=3}
 
-      # --- Run nopCommerce like your step 291/326 ---
+      # --- Run nopCommerce ---
       - name: Start nopCommerce on localhost:5000
         run: |
-          cd /var/www/nopcommerce
+          cd nopcommerce
           nohup env ASPNETCORE_URLS="http://0.0.0.0:5000" dotnet Nop.Web.dll > nop.log 2>&1 &
           sleep 15
           ss -lntp | grep :5000 || (echo "nopCommerce not listening" && cat nop.log && exit 1)
 
-      # ✅ Checklist localhost curl
+      # ✅ localhost curl check
       - name: Verify localhost works
         run: curl -LI http://localhost:5000
 
@@ -116,7 +113,6 @@ jobs:
 
       - name: Install testRigor CLI
         run: npm i -g testrigor-cli
-        # CLI install/run docs :contentReference[oaicite:4]{index=4}
 
       # ✅ Trigger test suite against localhost
       - name: Run testRigor suite
@@ -125,10 +121,9 @@ jobs:
             --token "${{ secrets.TESTRIGOR_CICD_TOKEN }}" \
             --localhost \
             --url "$TARGET_URL"
-        # Official CLI pattern :contentReference[oaicite:5]{index=5}
 
       - name: Dump nopCommerce log on failure
         if: failure()
         run: |
           echo "==== nop.log ===="
-          cat /var/www/nopcommerce/nop.log
+          cat nopcommerce/nop.log
