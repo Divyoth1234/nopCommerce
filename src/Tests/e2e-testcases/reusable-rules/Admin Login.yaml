@@ -1,0 +1,12 @@
+labels:
+- admin-login
+steps: |
+  log in
+  click "Administration"
+  check that page contains "Dashboard"
+precondition: ""
+autoApplyRule: false
+autoApplyAtFirstSteps: 0
+applicationId: rkvDTWhDHyeKaYAGp
+limitAutoApplyRule: false
+maxAutoApplyNumber: 1

@@ -1,0 +1,49 @@
+uuid: b8cf4cbe-b45c-44b4-8b0d-3c91c8521ee1
+customSteps: |
+  // 1.Place an order
+  click "Log in"
+  Customer Login
+  hover over "Electronics"
+  click "Cell phones"
+  click "Add to cart"
+  click "Shopping cart"
+  click "I agree with the terms"
+  click "Checkout"
+  click "Delete" if exists
+  select "United States of America" from "Select country" if exists
+  select "Alaska" from "Select state"
+  enter "test city" into "City"
+  enter "test 1" into "Address 1"
+  enter "12345" into "Zip / postal code"
+  enter "123123123" into "Phone number"
+  click "Continue"
+  click "Continue"
+  check that radiobutton "Check / Money Order" is checked
+  click "Continue"
+  click "Continue"
+  scroll down until page contains "You will earn"
+  click "Confirm" below "Back"
+  check that page contains "Your order has been successfully processed!"
+  grab value from element below "Your order has been successfully processed!" and save it as "orderNumber"
+  click "Log out"
+  //2. Cancel it from admin
+  click "Log in"
+  Admin Login
+  click "Sales"
+  click "Orders"
+  click "View" on the right of stored value "customerEmail"
+  click "Cancel order"
+  click "Yes"
+  check that page contains "Cancelled"
+  click "Logout"
+  // 3. Verification of the updated order status in customer account
+  click "Log in"
+  Customer Login
+  click "My account"
+  click "Orders"
+  check that page contains "Cancelled" below stored value "orderNumber"
+labels:
+- customer-login
+- admin-login
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

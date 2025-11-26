@@ -1,0 +1,13 @@
+labels:
+- customer-login
+steps: |
+  enter stored value "customerEmail" into "Email"
+  enter stored value "customerPass" into "Password"
+  click 2nd "Log in"
+  check that page contains "Log out"
+precondition: ""
+autoApplyRule: false
+autoApplyAtFirstSteps: 0
+applicationId: rkvDTWhDHyeKaYAGp
+limitAutoApplyRule: false
+maxAutoApplyNumber: 1

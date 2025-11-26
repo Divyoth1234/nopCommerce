@@ -1,0 +1,12 @@
+uuid: 0a097498-7be7-41c2-b0f7-5fb27a31871e
+customSteps: |
+  Admin Login
+  Create New Product
+  enter stored value "productName" into "Product name"
+  click 2nd "Search"
+  check that page contains stored value "productName"
+labels:
+- admin-login
+- new-product
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

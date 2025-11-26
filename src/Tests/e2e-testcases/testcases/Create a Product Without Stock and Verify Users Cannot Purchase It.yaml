@@ -1,0 +1,22 @@
+uuid: 80e7e3b3-7b37-4aa1-ac6c-b7d9dd18a4a0
+customSteps: |
+  Admin Login
+  click "Catalog"
+  click "Products"
+  click "Add new"
+  generate unique name , then enter into "Product name" and save as "productName"
+  enter "500" into "Price"
+  select "Track Inventory" from dropdown on the right of "Inventory method"
+  enter "0" into "Stock quantity"
+  click exactly "Save"
+  check that page contains "The new product has been added successfully."
+  click "close"
+  click "Logout"
+  enter stored value "productName" into "Search store"
+  click "Search"
+  click "Add to cart" below stored value "productName"
+  check that page contains "Out of stock"
+labels:
+- admin-login
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

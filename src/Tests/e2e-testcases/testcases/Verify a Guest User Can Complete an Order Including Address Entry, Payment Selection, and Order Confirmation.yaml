@@ -1,0 +1,28 @@
+uuid: 7f2e8e53-48ed-40ce-af90-8145853d0307
+customSteps: |
+  hover over "Electronics"
+  click "Cell phones"
+  click "Add to cart"
+  click "Shopping cart"
+  click "I agree with the terms"
+  click "Checkout"
+  click "Checkout as guest"
+  enter "test" into "First Name"
+  enter "user12" into "Last Name"
+  generate unique email , then enter into "Email" and save as "customerEmail"
+  select "Alaska" from "Select state"
+  enter "test city" into "City"
+  enter "test 1" into "Address"
+  enter "12345" into "Zip / postal code"
+  enter "123123123" into "Phone number"
+  click "Continue"
+  click "Continue"
+  check that radiobutton "Check / Money Order" is checked
+  click "Continue"
+  click "Continue"
+  scroll down until page contains "Tax"
+  click "Confirm" below "Back"
+  check that page contains "Your order has been successfully processed!"
+labels: []
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

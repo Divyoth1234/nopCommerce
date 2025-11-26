@@ -1,0 +1,10 @@
+uuid: 982ff620-7fa0-4381-9276-e6871dbde087
+customSteps: |
+  Create New User Account
+  click "My account"
+  check that page contains "My account - Customer info"
+  check that page contains "user123" using OCR
+labels:
+- new-account
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

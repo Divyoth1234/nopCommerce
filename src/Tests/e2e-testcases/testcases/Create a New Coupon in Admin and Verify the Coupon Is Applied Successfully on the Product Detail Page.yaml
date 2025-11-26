@@ -1,0 +1,24 @@
+uuid: 77043cb7-3726-461b-bf31-30c1d26d8b98
+customSteps: |
+  Admin Login
+  click "Promotions"
+  click "Discounts"
+  click "Add new"
+  enter "New Coupon Code" into "Name"
+  enter "40" into "Discount amount"
+  click "Requires Coupon Code"
+  generate unique name , then enter into "Coupon Code" and save as "couponCode"
+  click "Save"
+  check that page contains "The new discount has been added successfully."
+  click "Logout"
+  hover over "Electronics"
+  click "Cell phones"
+  click "Add to cart"
+  click "Shopping cart"
+  enter stored value "couponCode" into "Enter your coupon here"
+  click "APPLY COUPON"
+  check that page contains "The coupon code was applied"
+labels:
+- admin-login
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

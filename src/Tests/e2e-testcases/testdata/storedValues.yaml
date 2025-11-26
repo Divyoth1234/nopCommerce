@@ -1,0 +1,7 @@
+storedValues:
+- key: customerEmail
+  value: "__CUSTOMER_EMAIL__"
+  type: TEXT
+- key: customerPass
+  value: "__CUSTOMER_PASS__"
+  type: PROTECTED

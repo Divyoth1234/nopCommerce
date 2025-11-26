@@ -1,0 +1,26 @@
+uuid: 41bc373f-425e-4f39-b9b5-1e5a13dae9f2
+customSteps: |
+  enter "admin" into "Admin user password"
+  enter "admin" into "Confirm the password"
+  click "Create sample data"
+  click "Create database if it doesn't exist"
+  click "Enter raw connection string"
+  enter "Server=localhost,1433;Database=nopdb;User Id=nopuser;Password=Nop@12345;TrustServerCertificate=True;Encrypt=False;" into "Connection string"
+  click "Install"
+  wait 30 sec
+  reload
+  wait 30 sec
+  reload
+  check that page contains "Register"
+  click "Register"
+  enter "test" into "First Name"
+  enter "Rigor" into "Last Name"
+  enter stored value "customerEmail" into "Email"
+  enter stored value "customerPass" into "Password"
+  enter stored value "customerPass" into "Confirm Password"
+  click "Register"
+  check that page contains "Your registration completed"
+labels:
+- installation
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

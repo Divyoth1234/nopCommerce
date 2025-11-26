@@ -1,0 +1,19 @@
+labels:
+- new-product
+steps: |
+  click "Catalog"
+  click "Products"
+  click "Add new"
+  generate unique name , then enter into "Product name" and save as "productName"
+  click input below "SKU" and on the right of "Categories"
+  click "Computers"
+  click "SKU"
+  enter "500" into "Price"
+  click "Save"
+  check that page contains "The new product has been added successfully."
+precondition: ""
+autoApplyRule: false
+autoApplyAtFirstSteps: 0
+applicationId: rkvDTWhDHyeKaYAGp
+limitAutoApplyRule: false
+maxAutoApplyNumber: 1

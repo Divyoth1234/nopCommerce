@@ -1,0 +1,39 @@
+uuid: d0683ece-7696-491a-9d59-1f03c26c54e1
+customSteps: |
+  hover over "Electronics"
+  click "Cell phones"
+  click "Add to cart"
+  click "Shopping cart"
+  grab value from element below "Product(s)" and save as "productName"
+  grab value from "price" on the right of stored value "productName" and save as "productPrice"
+  click "I agree with the terms"
+  click "Checkout"
+  click "Checkout as guest"
+  enter "test" into "First Name"
+  enter "user12" into "Last Name"
+  generate unique email , then enter into "Email" and save as "customerEmail"
+  select "Alaska" from "Select state"
+  enter "test city" into "City"
+  enter "test 1" into "Address"
+  enter "12345" into "Zip / postal code"
+  enter "123123123" into "Phone number"
+  click "Continue"
+  click "Continue"
+  click "Continue"
+  click "Continue"
+  click button "Confirm" roughly below stored value "productName"
+  check that page contains "Your order has been successfully processed!"
+  click "Log in"
+  Admin Login
+  click "Sales"
+  click "Orders"
+  scroll down until page contains stored value "customerEmail"
+  click "View" on the right of stored value "customerEmail"
+  check that page contains "user12"
+  check that page contains stored value "customerEmail"
+  check that page contains stored value "productName"
+  check that page contains stored value "productPrice"
+labels:
+- admin-login
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

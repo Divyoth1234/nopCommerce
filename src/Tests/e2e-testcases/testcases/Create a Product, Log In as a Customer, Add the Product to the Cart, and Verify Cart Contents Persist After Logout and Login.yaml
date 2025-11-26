@@ -1,0 +1,23 @@
+uuid: 808a2509-25d2-48c3-a4cb-20f0164098ee
+customSteps: |
+  Admin Login
+  Create New Product
+  click "Logout"
+  click "Log in"
+  Customer Login
+  enter stored value "productName" into "Search store"
+  click "Search"
+  click "Add to cart"
+  check that page contains "The product has been added to your shopping cart"
+  click "close"
+  click "Log out"
+  click "Log in"
+  Customer Login
+  click "Shopping cart"
+  check that page contains stored value "productName"
+labels:
+- customer-login
+- admin-login
+- new-product
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

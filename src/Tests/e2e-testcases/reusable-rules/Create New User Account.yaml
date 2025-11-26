@@ -1,0 +1,17 @@
+labels:
+- new-account
+steps: |
+  click "Register"
+  enter "test" into "First Name"
+  enter "user123" into "Last Name"
+  generate unique email , then enter into "Email" and save as "generatedEmail"
+  enter "test123@123" into "Password"
+  enter "test123@123" into "Confirm password"
+  click "Register"
+  check that page contains "Your registration completed"
+precondition: ""
+autoApplyRule: false
+autoApplyAtFirstSteps: 0
+applicationId: rkvDTWhDHyeKaYAGp
+limitAutoApplyRule: false
+maxAutoApplyNumber: 1

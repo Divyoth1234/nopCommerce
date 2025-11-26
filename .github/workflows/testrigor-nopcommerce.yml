@@ -1,0 +1,210 @@
+name: nopCommerce (NoSource) + MSSQL + testRigor
+
+on:
+  push:
+    branches:
+      - "**"          # runs on any push to your fork branches
+  workflow_dispatch:
+
+jobs:
+  nopcommerce-ci:
+    runs-on: ubuntu-22.04
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: "Developer"
+          MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
+        ports:
+          - 1433:1433
+
+    env:
+      SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
+      NOP_DB: nopdb
+      NOP_USER: nopuser
+      NOP_USER_PW: ${{ secrets.NOP_USER_PASSWORD }}
+
+      
+      TESTRIGOR_SUITE_ID: ${{ vars.TESTRIGOR_SUITE_ID }}
+      TARGET_URL: http://127.0.0.1:5000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      
+      - name: Install prereqs + Microsoft repo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https unzip
+          wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+
+      - name: Install ASP.NET Core runtime 8.0
+        run: |
+          sudo apt-get install -y aspnetcore-runtime-8.0
+          dotnet --info
+
+      # --- Install sqlcmd tools ---
+      - name: Install sqlcmd tools
+        run: |
+          sudo apt-get install -y mssql-tools18 unixodbc-dev
+          echo "/opt/mssql-tools18/bin" >> $GITHUB_PATH
+          sqlcmd -? >/dev/null
+          
+      - name: Wait for SQL Server to be ready
+        run: |
+          echo "Waiting for MSSQL..."
+          for i in {1..30}; do
+            if sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -C -Q "SELECT 1" >/dev/null 2>&1; then
+              echo "MSSQL is ready!"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "MSSQL did not start in time"
+          exit 1
+
+      # --- DB creation steps ---
+      - name: Create nopCommerce database and user
+        run: |
+          sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -C -Q "IF DB_ID('${NOP_DB}') IS NULL CREATE DATABASE ${NOP_DB};"
+          sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -C -Q "IF NOT EXISTS (SELECT 1 FROM sys.sql_logins WHERE name='${NOP_USER}') CREATE LOGIN ${NOP_USER} WITH PASSWORD='${NOP_USER_PW}';"
+          sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -d "${NOP_DB}" -C -Q "IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name='${NOP_USER}') CREATE USER ${NOP_USER} FOR LOGIN ${NOP_USER}; EXEC sp_addrolemember N'db_owner', N'${NOP_USER}';"
+          sqlcmd -S localhost,1433 -U "${NOP_USER}" -P "${NOP_USER_PW}" -d "${NOP_DB}" -C -Q "SELECT DB_NAME();"
+
+      # --- NoSource download + unzip ---
+      - name: Download nopCommerce NoSource Linux package
+        run: |
+          mkdir -p nopcommerce
+          wget -O nop_no_source_linux.zip \
+            https://github.com/nopSolutions/nopCommerce/releases/download/release-4.90.1/nopCommerce_4.90.1_NoSource_linux_x64.zip
+          unzip -q nop_no_source_linux.zip -d nopcommerce
+
+      - name: Create folders + permissions
+        run: |
+          cd nopcommerce
+          mkdir -p bin logs
+          chmod -R 755 .
+
+      - name: Install libgdiplus (captcha/images)
+        run: sudo apt-get install -y libgdiplus
+
+      - name: Make nopCommerce folders writable
+        run: |
+          mkdir -p nopcommerce/App_Data nopcommerce/Plugins nopcommerce/logs nopcommerce/bin
+          chmod -R 777 nopcommerce/App_Data nopcommerce/Plugins nopcommerce/logs nopcommerce/bin
+
+
+
+      # --- Run nopCommerce ---
+      - name: Start nopCommerce on localhost:5000 (auto-restart)
+        run: |
+          cd nopcommerce
+          export ASPNETCORE_URLS="http://0.0.0.0:5000"
+          export DOTNET_ENVIRONMENT=Production
+          export ASPNETCORE_ENVIRONMENT=Production
+
+          # Restart loop: if nopCommerce exits (like after Install), it starts again
+          nohup bash -c 'while true; do dotnet Nop.Web.dll; echo "nopCommerce exited, restarting in 2s"; sleep 2; done' > nop.log 2>&1 &
+
+          echo "Waiting for nopCommerce..."
+          for i in {1..40}; do
+            if curl -sSf http://127.0.0.1:5000 >/dev/null; then
+              echo "nopCommerce is up!"
+              exit 0
+            fi
+            sleep 3
+          done
+
+          echo "nopCommerce never came up"
+          tail -n 200 nop.log
+          exit 1
+
+
+
+      # ✅ localhost curl check
+      - name: Verify localhost works
+        run: curl -LI http://127.0.0.1:5000
+
+      # --- Node + testRigor CLI ---
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install testRigor CLI
+        run: npm i -g testrigor-cli
+
+
+      - name: Build variables.json from storedValues.yaml + GitHub Secrets
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pyyaml
+          python3 - <<'PY'
+          import os, json, yaml
+      
+          in_path = "src/Tests/e2e-testcases/testdata/storedValues.yaml"
+          out_path = "src/Tests/e2e-testcases/testdata/variables.json"
+      
+          with open(in_path, "r", encoding="utf-8") as f:
+            raw = yaml.safe_load(f) or {}
+      
+          items = raw.get("storedValues", [])
+          if not isinstance(items, list):
+            raise SystemExit("storedValues must be a list")
+      
+          out = {}
+          for item in items:
+            k = item.get("key")
+            v = item.get("value")
+            if k:
+              out[str(k)] = "" if v is None else (v if isinstance(v, str) else str(v))
+      
+          # Override placeholders with secrets
+          if os.environ.get("TR_CUSTOMER_EMAIL"):
+            out["customerEmail"] = os.environ["TR_CUSTOMER_EMAIL"]
+          if os.environ.get("TR_CUSTOMER_PASS"):
+            out["customerPass"] = os.environ["TR_CUSTOMER_PASS"]
+      
+          with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+      
+          print(f"Wrote {out_path} with {len(out)} variables.")
+          PY
+        env:
+          TR_CUSTOMER_EMAIL: ${{ secrets.TR_CUSTOMER_EMAIL }}
+          TR_CUSTOMER_PASS: ${{ secrets.TR_CUSTOMER_PASS }}
+
+
+
+      # ✅ Trigger test suite against localhost
+      - name: Run testRigor suite
+        run: |
+          testrigor test-suite run "$TESTRIGOR_SUITE_ID" \
+            --token "${{ secrets.TESTRIGOR_CICD_TOKEN }}" \
+            --localhost \
+            --test-cases-path "src/Tests/e2e-testcases/testcases/**/*.yaml" \
+            --rules-path "src/Tests/e2e-testcases/reusable-rules/**/*.yaml" \
+            --variables-path "src/Tests/e2e-testcases/testdata/variables.json" \
+            --url "$TARGET_URL"
+
+      - name: Dump nopCommerce log on failure
+        if: failure()
+        run: |
+          echo "==== nop.log ===="
+          cat nopcommerce/nop.log
+
+      - name: Always print nopCommerce log
+        if: always()
+        run: |
+          echo "==== nop.log ===="
+          cat nopcommerce/nop.log || true
+          echo "==== directory listing ===="
+          ls -la nopcommerce || true
+          echo "==== App_Data ===="
+          ls -la nopcommerce/App_Data || true
+

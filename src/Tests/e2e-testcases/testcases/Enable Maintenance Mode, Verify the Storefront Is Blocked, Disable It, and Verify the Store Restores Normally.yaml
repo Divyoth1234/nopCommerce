@@ -1,0 +1,41 @@
+uuid: c5091dcd-4ba1-4d1e-ade0-05c970c2219a
+customSteps: |
+  // 1. Enable Maintenance mode
+  Admin Login
+  click "Configuration"
+  click "Settings"
+  click "General Settings"
+  if page does not contain "Store closed"
+  click "Basic"
+  click "Store closed"
+  else
+  click "Store closed"
+  end
+  click "Save"
+  check that page contains "The settings have been updated successfully."
+  click "Logout"
+  // 2. Verify Storefront is closed
+  check that page contains "This store is currently closed"
+  // 3. Disable the maintenance mode
+  click "Log in"
+  Admin Login
+  click "Configuration"
+  click "Settings"
+  click "General Settings"
+  if page does not contain "Store closed"
+  click "Basic"
+  click "Store closed"
+  else
+  click "Store closed"
+  end
+  click "Save"
+  check that page contains "The settings have been updated successfully."
+  click "Logout"
+  //4. Verify the storefront is up
+  click "Electronics"
+  check that page contains "Home"
+  check that page contains "Categories"
+labels:
+- admin-login
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp

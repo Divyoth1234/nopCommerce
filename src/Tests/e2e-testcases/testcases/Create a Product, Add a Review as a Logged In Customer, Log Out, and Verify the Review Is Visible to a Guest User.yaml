@@ -1,0 +1,29 @@
+uuid: 55e6fa0d-722a-4588-9626-093ce99d51b1
+customSteps: |
+  Admin Login
+  Create New Product
+  click "Logout"
+  click "Login"
+  Customer Login
+  enter stored value "productName" into "Search store"
+  click "Search"
+  click stored value "productName" roughly below "Sort by"
+  enter "test" into "Review title:"
+  enter "test review" into "Review text:"
+  click "Good" on the right of "Rating"
+  click "Submit Review"
+  check that page contains "Product review is successfully added."
+  click "close"
+  click "Log out"
+  //Verfication
+  check that page contains "Log in"
+  enter stored value "productName" into "Search store"
+  click "Search"
+  click stored value "productName" roughly below "Sort by"
+  check that page contains "test review"
+labels:
+- customer-login
+- admin-login
+- new-product
+disabled: false
+applicationId: rkvDTWhDHyeKaYAGp
