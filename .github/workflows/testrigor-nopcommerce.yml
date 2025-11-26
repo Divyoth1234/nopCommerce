@@ -95,19 +95,34 @@ jobs:
 
       - name: Make nopCommerce folders writable
         run: |
-          chmod -R 777 nopcommerce/App_Data || true
-          chmod -R 777 nopcommerce/bin || true
-          chmod -R 777 nopcommerce/logs || true
-          chmod -R 777 nopcommerce/Plugins || true
+          mkdir -p nopcommerce/App_Data nopcommerce/Plugins nopcommerce/logs nopcommerce/bin
+          chmod -R 777 nopcommerce/App_Data nopcommerce/Plugins nopcommerce/logs nopcommerce/bin
+
 
 
       # --- Run nopCommerce ---
       - name: Start nopCommerce on localhost:5000
         run: |
           cd nopcommerce
-          nohup env ASPNETCORE_URLS="http://0.0.0.0:5000" dotnet Nop.Web.dll > nop.log 2>&1 &
-          sleep 15
-          ss -lntp | grep :5000 || (echo "nopCommerce not listening" && cat nop.log && exit 1)
+          export ASPNETCORE_URLS="http://0.0.0.0:5000"
+          export DOTNET_ENVIRONMENT=Production
+          export ASPNETCORE_ENVIRONMENT=Production
+
+          nohup dotnet Nop.Web.dll > nop.log 2>&1 &
+          
+          echo "Waiting for nopCommerce..."
+          for i in {1..40}; do
+            if curl -sSf http://127.0.0.1:5000 >/dev/null; then
+              echo "nopCommerce is up!"
+              exit 0
+            fi
+            sleep 3
+          done
+
+          echo "nopCommerce never came up"
+          cat nop.log
+          exit 1
+
 
       # ✅ localhost curl check
       - name: Verify localhost works
@@ -135,3 +150,14 @@ jobs:
         run: |
           echo "==== nop.log ===="
           cat nopcommerce/nop.log
+
+      - name: Always print nopCommerce log
+        if: always()
+        run: |
+          echo "==== nop.log ===="
+          cat nopcommerce/nop.log || true
+          echo "==== directory listing ===="
+          ls -la nopcommerce || true
+          echo "==== App_Data ===="
+          ls -la nopcommerce/App_Data || true
+
