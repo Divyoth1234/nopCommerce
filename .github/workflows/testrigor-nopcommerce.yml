@@ -19,11 +19,6 @@ jobs:
           MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
         ports:
           - 1433:1433
-        options: >-
-          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P '${MSSQL_SA_PASSWORD}' -C -Q 'SELECT 1' || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 20
 
     env:
       SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
@@ -60,6 +55,19 @@ jobs:
           sudo apt-get install -y mssql-tools18 unixodbc-dev
           echo "/opt/mssql-tools18/bin" >> $GITHUB_PATH
           sqlcmd -? >/dev/null
+          
+      - name: Wait for SQL Server to be ready
+        run: |
+          echo "Waiting for MSSQL..."
+          for i in {1..30}; do
+            if sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -C -Q "SELECT 1" >/dev/null 2>&1; then
+              echo "MSSQL is ready!"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "MSSQL did not start in time"
+          exit 1
 
       # --- Your DB creation steps (idempotent) ---
       - name: Create nopCommerce database and user
