@@ -93,6 +93,14 @@ jobs:
       - name: Install libgdiplus (captcha/images)
         run: sudo apt-get install -y libgdiplus
 
+      - name: Make nopCommerce folders writable
+        run: |
+          chmod -R 777 nopcommerce/App_Data || true
+          chmod -R 777 nopcommerce/bin || true
+          chmod -R 777 nopcommerce/logs || true
+          chmod -R 777 nopcommerce/Plugins || true
+
+
       # --- Run nopCommerce ---
       - name: Start nopCommerce on localhost:5000
         run: |
