@@ -101,15 +101,16 @@ jobs:
 
 
       # --- Run nopCommerce ---
-      - name: Start nopCommerce on localhost:5000
+      - name: Start nopCommerce on localhost:5000 (auto-restart)
         run: |
           cd nopcommerce
           export ASPNETCORE_URLS="http://0.0.0.0:5000"
           export DOTNET_ENVIRONMENT=Production
           export ASPNETCORE_ENVIRONMENT=Production
 
-          nohup dotnet Nop.Web.dll > nop.log 2>&1 &
-          
+          # Restart loop: if nopCommerce exits (like after Install), it starts again
+          nohup bash -c 'while true; do dotnet Nop.Web.dll; echo "nopCommerce exited, restarting in 2s"; sleep 2; done' > nop.log 2>&1 &
+
           echo "Waiting for nopCommerce..."
           for i in {1..40}; do
             if curl -sSf http://127.0.0.1:5000 >/dev/null; then
@@ -120,8 +121,9 @@ jobs:
           done
 
           echo "nopCommerce never came up"
-          cat nop.log
+          tail -n 200 nop.log
           exit 1
+
 
 
       # ✅ localhost curl check
