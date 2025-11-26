@@ -80,11 +80,11 @@ jobs:
       # --- Your NoSource download + unzip steps ---
       - name: Download nopCommerce NoSource Linux package
         run: |
-          mkdir -p /var/www/nopcommerce
+          mkdir -p nopcommerce
           wget -O nop_no_source_linux.zip \
             https://github.com/nopSolutions/nopCommerce/releases/download/release-4.90.1/nopCommerce_4.90.1_NoSource_linux_x64.zip
-          unzip -q nop_no_source_linux.zip -d /var/www/nopcommerce
-        # 4.90.1 NoSource linux_x64 is the correct package :contentReference[oaicite:2]{index=2}
+          unzip -q nop_no_source_linux.zip -d nopcommerce
+
 
       - name: Create folders + permissions
         run: |
