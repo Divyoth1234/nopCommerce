@@ -1,0 +1,126 @@
+name: nopCommerce (NoSource) + MSSQL + testRigor
+
+on:
+  push:
+    branches:
+      - "**"          # runs on any push to your fork branches
+  workflow_dispatch:
+
+jobs:
+  nopcommerce-ci:
+    runs-on: ubuntu-22.04
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: "Developer"
+          MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P '${MSSQL_SA_PASSWORD}' -C -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
+      NOP_DB: nopdb
+      NOP_USER: nopuser
+      NOP_USER_PW: ${{ secrets.NOP_USER_PASSWORD }}
+
+      # Suite ID is a variable (NOT secret) per your checklist
+      TESTRIGOR_SUITE_ID: ${{ vars.TESTRIGOR_SUITE_ID }}
+      TARGET_URL: http://localhost:5000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- Your steps: apt prereqs + MS repo + aspnetcore runtime 8 ---
+      - name: Install prereqs + Microsoft repo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https unzip
+          wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+
+      - name: Install ASP.NET Core runtime 8.0
+        run: |
+          sudo apt-get install -y aspnetcore-runtime-8.0
+          dotnet --info
+        # nopCommerce Linux install uses .NET runtime on Ubuntu 22.04 :contentReference[oaicite:1]{index=1}
+
+      # --- Install sqlcmd tools (your step 250) ---
+      - name: Install sqlcmd tools
+        run: |
+          sudo apt-get install -y mssql-tools18 unixodbc-dev
+          echo "/opt/mssql-tools18/bin" >> $GITHUB_PATH
+          sqlcmd -? >/dev/null
+
+      # --- Your DB creation steps (idempotent) ---
+      - name: Create nopCommerce database and user
+        run: |
+          sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -C -Q "IF DB_ID('${NOP_DB}') IS NULL CREATE DATABASE ${NOP_DB};"
+          sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -C -Q "IF NOT EXISTS (SELECT 1 FROM sys.sql_logins WHERE name='${NOP_USER}') CREATE LOGIN ${NOP_USER} WITH PASSWORD='${NOP_USER_PW}';"
+          sqlcmd -S localhost,1433 -U SA -P "$SA_PASSWORD" -d "${NOP_DB}" -C -Q "IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name='${NOP_USER}') CREATE USER ${NOP_USER} FOR LOGIN ${NOP_USER}; EXEC sp_addrolemember N'db_owner', N'${NOP_USER}';"
+          sqlcmd -S localhost,1433 -U "${NOP_USER}" -P "${NOP_USER_PW}" -d "${NOP_DB}" -C -Q "SELECT DB_NAME();"
+
+      # --- Your NoSource download + unzip steps ---
+      - name: Download nopCommerce NoSource Linux package
+        run: |
+          mkdir -p /var/www/nopcommerce
+          wget -O nop_no_source_linux.zip \
+            https://github.com/nopSolutions/nopCommerce/releases/download/release-4.90.1/nopCommerce_4.90.1_NoSource_linux_x64.zip
+          unzip -q nop_no_source_linux.zip -d /var/www/nopcommerce
+        # 4.90.1 NoSource linux_x64 is the correct package :contentReference[oaicite:2]{index=2}
+
+      - name: Create folders + permissions
+        run: |
+          cd /var/www/nopcommerce
+          mkdir -p bin logs
+          sudo chmod -R 755 /var/www/nopcommerce
+
+      - name: Install libgdiplus (captcha/images)
+        run: sudo apt-get install -y libgdiplus
+        # recommended by nopCommerce Linux docs :contentReference[oaicite:3]{index=3}
+
+      # --- Run nopCommerce like your step 291/326 ---
+      - name: Start nopCommerce on localhost:5000
+        run: |
+          cd /var/www/nopcommerce
+          nohup env ASPNETCORE_URLS="http://0.0.0.0:5000" dotnet Nop.Web.dll > nop.log 2>&1 &
+          sleep 15
+          ss -lntp | grep :5000 || (echo "nopCommerce not listening" && cat nop.log && exit 1)
+
+      # ✅ Checklist localhost curl
+      - name: Verify localhost works
+        run: curl -LI http://localhost:5000
+
+      # --- Node + testRigor CLI ---
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install testRigor CLI
+        run: npm i -g testrigor-cli
+        # CLI install/run docs :contentReference[oaicite:4]{index=4}
+
+      # ✅ Trigger test suite against localhost
+      - name: Run testRigor suite
+        run: |
+          testrigor test-suite run "$TESTRIGOR_SUITE_ID" \
+            --token "${{ secrets.TESTRIGOR_CICD_TOKEN }}" \
+            --localhost \
+            --url "$TARGET_URL"
+        # Official CLI pattern :contentReference[oaicite:5]{index=5}
+
+      - name: Dump nopCommerce log on failure
+        if: failure()
+        run: |
+          echo "==== nop.log ===="
+          cat /var/www/nopcommerce/nop.log
