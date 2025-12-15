@@ -26,7 +26,7 @@ jobs:
       NOP_USER: nopuser
       NOP_USER_PW: ${{ secrets.NOP_USER_PASSWORD }}
 
-      # Suite ID is a variable (NOT secret) per your checklist
+      
       TESTRIGOR_SUITE_ID: ${{ vars.TESTRIGOR_SUITE_ID }}
       TARGET_URL: http://127.0.0.1:5000
 
@@ -34,7 +34,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --- Your steps: apt prereqs + MS repo + aspnetcore runtime 8 ---
+      
       - name: Install prereqs + Microsoft repo
         run: |
           sudo apt-get update
