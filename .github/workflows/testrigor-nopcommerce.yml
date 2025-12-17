@@ -136,10 +136,14 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Install testRigor CLI
-        run: npm i -g testrigor-cli@latest
-             testrigor --version || true
-             testrigor test-suite run --help | head -n 80
+      - name: Install testRigor CLI (latest) + verify
+        run: |
+          npm install -g testrigor-cli@latest
+          echo "PATH=$PATH"
+          which testrigor
+          testrigor --version
+          testrigor test-suite run --help | head -n 80
+
              
 
       - name: Build variables.json from storedValues.yaml + GitHub Secrets
