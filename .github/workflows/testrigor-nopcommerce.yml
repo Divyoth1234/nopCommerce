@@ -182,11 +182,23 @@ jobs:
 
 
       # ✅ Trigger test suite against localhost
-      - name: Run testRigor suite
+      - name: Run testRigor setup (label:installation)
         run: |
           testrigor test-suite run "$TESTRIGOR_SUITE_ID" \
             --token "${{ secrets.TESTRIGOR_CICD_TOKEN }}" \
             --localhost \
+            --labels "installation" \
+            --test-cases-path "src/Tests/e2e-testcases/testcases/**/*.yaml" \
+            --rules-path "src/Tests/e2e-testcases/reusable-rules/**/*.yaml" \
+            --variables-path "src/Tests/e2e-testcases/testdata/variables.json" \
+            --url "$TARGET_URL"
+
+      - name: Run testRigor main tests (exclude label:installation)
+        run: |
+          testrigor test-suite run "$TESTRIGOR_SUITE_ID" \
+            --token "${{ secrets.TESTRIGOR_CICD_TOKEN }}" \
+            --localhost \
+            --excluded-labels "installation" \
             --test-cases-path "src/Tests/e2e-testcases/testcases/**/*.yaml" \
             --rules-path "src/Tests/e2e-testcases/reusable-rules/**/*.yaml" \
             --variables-path "src/Tests/e2e-testcases/testdata/variables.json" \
